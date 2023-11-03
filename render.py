@@ -175,8 +175,10 @@ class Renderer_UV(Render):
         settings = bpy.context.scene.uv_drawuv_switch.draw_uv_in_objmode
         if not settings:
             return
-
-        if bpy.context.active_object.mode == 'EDIT':
+        obj=bpy.context.active_object
+        if not obj:
+            return
+        if obj.mode == 'EDIT':
             return
 
         batch = batch_for_shader(self.shader, 'LINES', {"pos": self.obj_uv})

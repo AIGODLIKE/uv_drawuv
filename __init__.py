@@ -14,7 +14,7 @@ bl_info = {
     "name": "幻之境:uv高亮绘制",
     "category": "UV",
     "author": "幻之境:cupcko",
-    "version": (1, 0, 1),
+    "version": (1, 0, 2),
     "blender": (3, 5, 0),
     "location": "ImageEditor > Tool Shelf",
     "description": "在物体模式下显示uv，在编辑模式下绘制选择的uv顶点",
