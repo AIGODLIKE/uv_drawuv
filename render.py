@@ -26,7 +26,17 @@ def all_views(func):
 class Render():
     def __init__(self):
         self.debug = 0
-
+    def handle_uveditor(self):
+        '''检测是否有uv界面，有返回True'''
+        for window in bpy.context.window_manager.windows:
+            for area in window.screen.areas:
+                if area.type == "IMAGE_EDITOR" and area.ui_type == "UV":
+                    # self.renderer_3DView.uveditor = True
+                    # print(f'[draw uv]:update中，检测到有uv视图')
+                    return True
+        # print(f'[draw uv]:update中，检测到无uv视图')
+        # self.renderer_3DView.uveditor = False
+        return False
 
 class Renderer_3DView(Render):
     '''
@@ -61,11 +71,12 @@ class Renderer_3DView(Render):
         self.enabled = False
         bpy.types.SpaceView3D.draw_handler_remove(
             self.handle_3dview, 'WINDOW')
+        print(self.handle_3dview)
         self.handle_3dview = None
 
     def draw(self):
         settings = bpy.context.scene.uv_drawuv_switch.draw_selected_in_3dview
-        if not settings:
+        if not settings or bpy.context.scene.tool_settings.use_uv_select_sync or not self.handle_uveditor():
             return
 
         if self.debug:

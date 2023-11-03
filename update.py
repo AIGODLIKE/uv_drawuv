@@ -87,7 +87,7 @@ class Updater():
         self.renderer_UV = Renderer_UV()
         # 设置绘制颜色
         self.subscribed = False
-
+        self.selected_objs=None
         self.last_update = 0
         self.scene_update = False
 
@@ -465,7 +465,7 @@ def depsgraph_handler(dummy):
 
         delta = (time.perf_counter() - updater.last_update)
 
-        if delta > 3.1 / 10.0 and updater.scene_update:
+        if delta > 0.31 and updater.scene_update:
             if updater.renderer_3DView.debug:
                 print(f'[draw uv]:{delta} 更新一次数据处理')
             updater.scene_update = False

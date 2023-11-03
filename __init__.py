@@ -1,3 +1,5 @@
+import time
+
 import bpy
 from .render import tag_redraw_all_views
 from bpy.app.handlers import persistent
@@ -12,7 +14,7 @@ bl_info = {
     "name": "幻之境:uv高亮绘制",
     "category": "UV",
     "author": "幻之境:cupcko",
-    "version": (1, 0, 0),
+    "version": (1, 0, 1),
     "blender": (3, 5, 0),
     "location": "ImageEditor > Tool Shelf",
     "description": "在物体模式下显示uv，在编辑模式下绘制选择的uv顶点",
@@ -54,8 +56,9 @@ def deps_refresh_view():
     '''隔0.3s刷新deps'''
 
     obj=bpy.context.active_object
-
-
+    # print(time.time())
+    if not obj:
+        return
     if obj is not None and obj.type=='MESH' :
         if not update.updater.handle_uveditor():
             update.updater.renderer_3DView.disable()
@@ -72,8 +75,18 @@ def deps_refresh_view():
             tag_redraw_all_views()
 
     update.updater.start_mouse_op()
+    # a = time.time()
+    objs = []
+    for o in bpy.context.selected_objects:
+        if o.type == 'MESH':
+            objs.append(o.name)
+    if update.updater.selected_objs != objs:
+        update.updater.selected_objs=objs[:]
+        objs.clear()
 
-
+        obj.data['temp_refresh_prop']=1
+        bpy.ops.wm.properties_remove(data_path="object.data", property_name="temp_refresh_prop")
+        # print('delta time',time.time()-a)
     return 0.3
 
 
