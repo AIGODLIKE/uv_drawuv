@@ -28,10 +28,7 @@ class Update_Operator(bpy.types.Operator):
     _is_running = True
     is_start = False
 
-    # @classmethod
-    # def is_runing(cls):
-    #     return cls._is_running
-    #
+
     @classmethod
     def stop(cls):
         cls._is_running = False
@@ -68,12 +65,9 @@ class Update_Operator(bpy.types.Operator):
                                 mouse_region_y < region_y + height):
 
                             # if updater.renderer_3DView.debug:
-                            print('[draw uv]:模态：刷新一次uv顶点')
+                            # print('[draw uv]:模态：刷新一次uv顶点')
                             updater.update()
-                            # try:
-                            #     bpy.context.active_object.data.update()
-                            # except:
-                            #     print('[draw uv]非mesh物体不可更新')
+
 
         return {'PASS_THROUGH'}
 
@@ -156,7 +150,7 @@ class Updater():
         return True
 
     def update(self):
-
+        settings = bpy.context.scene.uv_drawuv_switch
         if self.renderer_3DView.debug:
             print('[draw uv]update')
         if not self.handle_uveditor():
@@ -172,7 +166,6 @@ class Updater():
             if self.renderer_3DView.debug:
                 print('[draw uv]需要禁用uv同步')
             self.renderer_3DView.disable()
-
             tag_redraw_all_views()
             return
 
@@ -186,6 +179,8 @@ class Updater():
             # 如果当前不是在UV编辑模式下，它会重置某些变量并退出
             self.renderer_3DView.disable()
             tag_redraw_all_views()
+            if not settings.draw_uv_in_objmode:
+                return
             # 检测顶点数
             for o in bpy.context.selected_objects:
                 if o.type == 'MESH':
@@ -193,21 +188,22 @@ class Updater():
                         return
 
             if self.renderer_UV.uv_edited or self.renderer_UV.obj_changed:
-                print(
-                    f'[draw uv]如果uv_edited,obj_changed,{self.renderer_UV.uv_edited}{self.renderer_UV.obj_changed}更新uv')
+                # print(
+                    # f'[draw uv]如果uv_edited,obj_changed,{self.renderer_UV.uv_edited}{self.renderer_UV.obj_changed}更新uv')
                 self.collect_uv_elements()
             self.renderer_UV.enable()
-            # if  bpy.context.active_object is not None and bpy.context.active_object.type=='MESH':
-            #     bpy.context.active_object.data.update()
+
         else:
             self.renderer_UV.disable()
             tag_redraw_all_views()
             # 开始处理3d视图绘制
-
+            if not settings.draw_selected_in_3dview:
+                return
             prefs = bpy.context.preferences.addons[__package__].preferences
 
             obj = bpy.context.active_object
-            self.bm_instance = bmesh.from_edit_mesh(obj.data)
+            if obj.type=='MESH':
+                self.bm_instance = bmesh.from_edit_mesh(obj.data)
 
             if self.renderer_3DView.debug:
                 print('[draw uv]断点2')
@@ -343,12 +339,8 @@ class Updater():
         self.selected_faces.clear()
 
     def start_mouse_op(self):
-        # if not Update_Operator.is_start:
-        #     bpy.ops.uv.uv_mouse_position('INVOKE_DEFAULT')
-        #     print('启动模态鼠标')
-        #     Update_Operator.is_start=True
-        #     return
-        print(f'[draw uv]:启动鼠标事件器中...', Update_Operator._is_running)
+
+        # print(f'[draw uv]:启动鼠标事件器中...', Update_Operator._is_running)
         if updater.renderer_3DView.debug:
             print(f'[draw uv]:读取初始化[模态初始化] {modal_settings.init}  [模态启动]{modal_settings.mouse_update}')
         if modal_settings.init:
@@ -360,31 +352,6 @@ class Updater():
             Update_Operator._is_running=True
             bpy.ops.uv.uv_mouse_position('INVOKE_DEFAULT')
             print('启动鼠标事件器')
-        # if not modal_settings.mouse_update:
-        #     area = next((a for a in bpy.context.screen.areas if a.type == 'IMAGE_EDITOR' or a.type=='VIEW_3D'), None)
-        #     if area:
-        #         with bpy.context.temp_override(area=area):
-        #             bpy.ops.uv.uv_mouse_position('INVOKE_DEFAULT')
-        #             if updater.renderer_3DView.debug:
-        #                 print('[draw uv]:启动鼠标modal')
-        #
-        #                 print(f'[draw uv]:启动成功...')
-        #     else:
-        #         print('[draw uv]:请打开3d视图或者uv视图')
-        #         print('[draw uv]:启动鼠标事件器失败...')
-            # for window in bpy.context.window_manager.windows:
-            #     for area in window.screen.areas:
-            #         if area.type == 'VIEW_3D' or area.type == 'IMAGE_EDITOR':
-            #             # try:
-            #             with bpy.context.temp_override(area=area):
-            #
-            #                 bpy.ops.uv.uv_mouse_position('INVOKE_DEFAULT')
-            #                 if updater.renderer_3DView.debug:
-            #                         print('[draw uv]:启动鼠标modal')
-            #                 break
-            #             # except:
-            #             #     print('[draw uv]:请打开3d视图或者uv视图')
-            #             #     return
 
 
 
@@ -440,13 +407,14 @@ def switch_obj_callback(context):
             options={"PERSISTENT"}
         )
 
-        print('[draw uv]当前激活物体:', bpy.context.object.name)
+        # print('[draw uv]当前激活物体:', bpy.context.object.name)
         if bpy.context.object.type == 'MESH':
-            print('[draw uv]切换物体，刷新uv:', )
+            # print('[draw uv]切换物体，刷新uv:', )
             updater.update()
             updater.obj_changed = False
     else:
         print('[draw uv]当前没有激活物体')
+
     updater.previous_mode = bpy.context.object.mode if bpy.context.object else None
 
 
@@ -466,7 +434,7 @@ def toggle_mode_callback():
     # global previous_mode
     current_mode = bpy.context.object.mode
     if current_mode != updater.previous_mode:
-        print("[draw uv]:切换模式 {current_mode}")
+        # print("[draw uv]:切换模式 {current_mode}")
         updater.previous_mode = current_mode
     if bpy.context.active_object.type == 'MESH':
         updater.update()
@@ -476,7 +444,7 @@ def toggle_mode_callback():
 
 @persistent
 def depsgraph_handler(dummy):
-    print('[draw uv]进入视图刷新句柄handler')
+    # print('[draw uv]进入视图刷新句柄handler')
     if not updater.subscribed:
         # 设置渲染开关
         switch_obj_msgbus()
@@ -490,7 +458,7 @@ def depsgraph_handler(dummy):
         if updater.initial_refresh:
 
             if obj is not None and obj.type == 'MESH' and obj.mode == 'OBJECT':
-                print(f'[draw uv]:首次更新')
+                # print(f'[draw uv]:首次更新')
                 updater.update()
                 # obj.data.update()
                 updater.initial_refresh = False

@@ -23,7 +23,7 @@ class DrawUV_Color_Preferences(bpy.types.AddonPreferences):
     selection_faces_3dview: bpy.props.FloatVectorProperty(name="面颜色",
                                                           subtype="COLOR",
                                                           default=(
-                                                              0.0, 1.0, 0.3, 0.35),
+                                                             0.0, 0.341, 0.976, 0.35),
                                                           size=4,
                                                           min=0.0,
                                                           max=1.0)
@@ -31,7 +31,7 @@ class DrawUV_Color_Preferences(bpy.types.AddonPreferences):
     object_draw_uv: bpy.props.FloatVectorProperty(name="UV颜色",
                                                   subtype="COLOR",
                                                   default=(
-                                                      1.0, 1.0, 0.0, 1.0),
+                                                      0.034, 0.190, 0.328, 0.253),
                                                   size=4,
                                                   min=0.0,
                                                   max=1.0)

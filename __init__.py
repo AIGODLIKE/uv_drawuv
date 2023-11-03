@@ -9,11 +9,11 @@ from . import (
 )
 
 bl_info = {
-    "name": "uv_drawuv",
+    "name": "幻之境:uv高亮绘制",
     "category": "UV",
-    "author": "幻之境_cupcko",
+    "author": "幻之境:cupcko",
     "version": (1, 0, 0),
-    "blender": (3, 0, 0),
+    "blender": (3, 5, 0),
     "location": "ImageEditor > Tool Shelf",
     "description": "在物体模式下显示uv，在编辑模式下绘制选择的uv顶点",
     "warning": "",
@@ -51,23 +51,22 @@ def is_modal_running(operator_idname):
             return True
     return False
 def deps_refresh_view():
-    # print('update deps_refresh_view')
     '''隔0.3s刷新deps'''
-    # tag_redraw_all_views()
-    # if  update.updater.handle_uveditor():
-    # if not bpy.context.scene.tool_settings.use_uv_select_sync:
+
     obj=bpy.context.active_object
 
-    # if obj is not None and obj.type=='MESH' and obj.mode=='EDIT':
+
     if obj is not None and obj.type=='MESH' :
         if not update.updater.handle_uveditor():
             update.updater.renderer_3DView.disable()
+            update.updater.renderer_UV.disable()
             tag_redraw_all_views()
-            # obj.data.update()
+
         if obj.mode=='OBJECT':
             update.updater.renderer_3DView.disable()
+
             tag_redraw_all_views()
-            # obj.data.update()
+
         else:
             update.updater.renderer_3DView.enable()
             tag_redraw_all_views()
