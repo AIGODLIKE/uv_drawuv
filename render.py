@@ -71,7 +71,7 @@ class Renderer_3DView(Render):
         self.enabled = False
         bpy.types.SpaceView3D.draw_handler_remove(
             self.handle_3dview, 'WINDOW')
-        print(self.handle_3dview)
+        # print(self.handle_3dview)
         self.handle_3dview = None
 
     def draw(self):
