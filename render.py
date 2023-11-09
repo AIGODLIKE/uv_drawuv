@@ -26,6 +26,7 @@ def all_views(func):
 class Render():
     def __init__(self):
         self.debug = 0
+
     def handle_uveditor(self):
         '''检测是否有uv界面，有返回True'''
         for window in bpy.context.window_manager.windows:
@@ -38,6 +39,7 @@ class Render():
         # self.renderer_3DView.uveditor = False
         return False
 
+
 class Renderer_3DView(Render):
     '''
     这个渲染器负责在场景视图中绘制选定的uv, uv边和uv面。
@@ -49,9 +51,9 @@ class Renderer_3DView(Render):
         self.shader = shader.view3d_gpu_shader()
         self.enabled = False
         # self.view_proj_matrix = None
-        self.selected_verts = []
-        self.selected_edges = []
-        self.selected_faces = []
+        self.selected_verts = {}
+        self.selected_edges = {}
+        self.selected_faces = {}
 
     def enable(self):
         if self.enabled:
@@ -63,7 +65,6 @@ class Renderer_3DView(Render):
         'WINDOW'：这是绘图的目标类型。在Blender中，它表示整个3D视图窗口。
         'POST_VIEW'：这表示在所有的常规3D视图内容绘制之后，再绘制self.draw。这确保self.draw的内容被绘制在顶部，不会被其他3D内容遮挡'''
         self.handle_3dview = bpy.types.SpaceView3D.draw_handler_add(self.draw, (), 'WINDOW', 'POST_VIEW')
-
 
     def disable(self):
         if not self.enabled:
@@ -85,29 +86,31 @@ class Renderer_3DView(Render):
 
         mode = bpy.context.scene.tool_settings.uv_select_mode
         color = bpy.context.preferences.addons[__package__].preferences
-
+        objs_name = []
+        for o in bpy.context.selected_objects:
+            if o.type == 'MESH':
+                objs_name.append(o.name)
         if mode == "VERTEX":
-
-            batch = batch_for_shader(self.shader, 'POINTS', {"pos": self.selected_verts})
-            self.shader.uniform_float("color", color.selection_verts_3dview)
+            self.set_batch(objs_name, color.selection_verts_3dview, 'POINTS', self.selected_verts)
         elif mode == 'EDGE':
-
-            batch = batch_for_shader(self.shader, 'LINES', {"pos": self.selected_edges})
-            self.shader.uniform_float("color", color.selection_edges_3dview)
+            self.set_batch(objs_name, color.selection_edges_3dview, 'LINES', self.selected_edges)
         else:
+            self.set_batch(objs_name, color.selection_faces_3dview, 'TRIS', self.selected_faces)
 
-            batch = batch_for_shader(self.shader, 'TRIS', {"pos": self.selected_faces})
-            self.shader.uniform_float("color", color.selection_faces_3dview)
-            gpu.state.blend_set('ALPHA')
-        gpu.state.depth_test_set('LESS_EQUAL')
-
-        self.shader.uniform_float("viewProjectionMatrix", bpy.context.region_data.perspective_matrix)
-        self.shader.uniform_float("wolrdMatrix", bpy.context.active_object.matrix_world)
-        self.shader.bind()
-
-        batch.draw(self.shader)
-
-
+    def set_batch(self, objs_name, color, render_type, coords):
+        context = bpy.context
+        for name in objs_name:
+            if name not in self.selected_verts:
+                return
+            batch = batch_for_shader(self.shader, f'{render_type}', {"pos": coords[name]})
+            self.shader.uniform_float("color", color)
+            if render_type == 'TRIS':
+                gpu.state.blend_set('ALPHA')
+            gpu.state.depth_test_set('LESS_EQUAL')
+            self.shader.uniform_float("viewProjectionMatrix", context.region_data.perspective_matrix)
+            self.shader.uniform_float("wolrdMatrix", bpy.data.objects[name].matrix_world)
+            self.shader.bind()
+            batch.draw(self.shader)
 
 
 class Renderer_UV(Render):
@@ -175,7 +178,7 @@ class Renderer_UV(Render):
         settings = bpy.context.scene.uv_drawuv_switch.draw_uv_in_objmode
         if not settings:
             return
-        obj=bpy.context.active_object
+        obj = bpy.context.active_object
         if not obj:
             return
         if obj.mode == 'EDIT':
