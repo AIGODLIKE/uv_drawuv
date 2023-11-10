@@ -94,8 +94,6 @@ class Updater():
         self.scene_update = False
 
         self.uv_select_mode = None
-        self.bm_instance = None
-
         # detect mesh changes
         self.vert_select_count = 0
         self.uv_select_count = 0
@@ -205,26 +203,45 @@ class Updater():
             #多物体与单物体
 
             self.mul_objs.clear()
-            num = 0
             for o in bpy.context.selected_objects:
                 if o.type=='MESH':
                     self.mul_objs.append(o.name)
-                    num=num+1
-            if num >1:
                 #多物体渲染
-                if self.handle_uv_select_mode():
-                    for o in self.mul_objs:
-                        self.objs_bm[o] = bmesh.from_edit_mesh(bpy.data.objects[o].data)
-                        try:
+            if self.handle_uv_select_mode():
+                for o in self.mul_objs:
+                    self.objs_bm[o] = bmesh.from_edit_mesh(bpy.data.objects[o].data)
+                    if len(self.objs_bm[o].verts) > prefs.max_verts:
+                        if self.renderer_3DView.debug:
+                            print('[draw uv]检测顶点数是否超标')
+                        return
+                    if self.renderer_3DView.debug:
+                        print('[draw uv]uv选择变了')
+                    self.reset_3dview()
+                    # 如果UV选择发生更改，它会收集所有选择的元素。
+                    # 记录这个过程花了多长时间（尽管实际的时间没有在这段代码中使用）
+                    uv_layer = self.objs_bm[o].loops.layers.uv.verify()
+                    self.collect_selected_elements(o,self.objs_bm[o], uv_layer)
+                    self.objs_bm[o].free()
 
-                            if len(self.bm_instance.verts) > prefs.max_verts:
-                                if self.renderer_3DView.debug:
-                                    print('[draw uv]检测顶点数是否超标')
-                                return
-                        except:
-                            pass
-                        # if uv_selection_changed or self.handle_uv_select_mode():  # 或者uv 选择变了
-                            # self.uv_select_mode定义在init.py post_load_handler
+                return
+            uv_selection_changed=None
+            for o in self.mul_objs:
+                self.objs_bm[o]=bmesh.from_edit_mesh(bpy.data.objects[o].data)
+                if len(self.objs_bm[o].verts) > prefs.max_verts:
+                    if self.renderer_3DView.debug:
+                        print('[draw uv]检测顶点数是否超标')
+                    return
+                uv_layer = self.objs_bm[o].loops.layers.uv.verify()
+                uv_selection_changed = self.detect_mesh_changes(self.objs_bm[o], uv_layer)
+                self.objs_bm[o].free()
+
+                if uv_selection_changed:
+                    break
+            if uv_selection_changed:
+                for o in self.mul_objs:
+                    self.objs_bm[o] = bmesh.from_edit_mesh(bpy.data.objects[o].data)
+                    if uv_selection_changed or self.handle_uv_select_mode():  # 或者uv 选择变了
+                        # self.uv_select_mode定义在init.py post_load_handler
                         if self.renderer_3DView.debug:
                             print('[draw uv]uv选择变了')
                         self.reset_3dview()
@@ -233,76 +250,6 @@ class Updater():
                         uv_layer = self.objs_bm[o].loops.layers.uv.verify()
                         self.collect_selected_elements(o,self.objs_bm[o], uv_layer)
                         self.objs_bm[o].free()
-
-                    return
-                uv_selection_changed=None
-                for o in self.mul_objs:
-                    # try:
-                    self.objs_bm[o]=bmesh.from_edit_mesh(bpy.data.objects[o].data)
-                #检测顶点数是否超标
-                # try:
-
-                    if len(self.objs_bm[o].verts) > prefs.max_verts:
-                        if self.renderer_3DView.debug:
-                            print('[draw uv]检测顶点数是否超标')
-                        return
-                    uv_layer = self.objs_bm[o].loops.layers.uv.verify()
-                    uv_selection_changed = self.detect_mesh_changes(self.objs_bm[o], uv_layer)
-                    self.objs_bm[o].free()
-                    # except:
-                    #     pass
-
-                    if uv_selection_changed:
-                        break
-                if uv_selection_changed:
-                    for o in self.mul_objs:
-                        self.objs_bm[o] = bmesh.from_edit_mesh(bpy.data.objects[o].data)
-                        if uv_selection_changed or self.handle_uv_select_mode():  # 或者uv 选择变了
-                            # self.uv_select_mode定义在init.py post_load_handler
-                            if self.renderer_3DView.debug:
-                                print('[draw uv]uv选择变了')
-                            self.reset_3dview()
-                            # 如果UV选择发生更改，它会收集所有选择的元素。
-                            # 记录这个过程花了多长时间（尽管实际的时间没有在这段代码中使用）
-                            uv_layer = self.objs_bm[o].loops.layers.uv.verify()
-                            self.collect_selected_elements(o,self.objs_bm[o], uv_layer)
-                            self.objs_bm[o].free()
-            else:
-                obj = bpy.context.active_object
-                if obj.type=='MESH':
-                    self.bm_instance = bmesh.from_edit_mesh(obj.data)
-
-                if self.renderer_3DView.debug:
-                    print('[draw uv]断点2')
-
-                try:
-
-                    if len(self.bm_instance.verts) > prefs.max_verts:
-                        if self.renderer_3DView.debug:
-                            print('[draw uv]检测顶点数是否超标')
-                        return
-                except:
-                    pass
-
-                uv_layer = self.bm_instance.loops.layers.uv.verify()
-                if updater.renderer_3DView.debug:
-                    print('[draw uv]读取uv层')
-
-                uv_selection_changed = self.detect_mesh_changes(self.bm_instance, uv_layer)
-
-                if uv_selection_changed or self.handle_uv_select_mode():  # 或者uv 选择变了
-                    # self.uv_select_mode定义在init.py post_load_handler
-                    if self.renderer_3DView.debug:
-                        print('[draw uv]uv选择变了')
-                    self.reset_3dview()
-                    # 如果UV选择发生更改，它会收集所有选择的元素。
-                    # 记录这个过程花了多长时间（尽管实际的时间没有在这段代码中使用）
-                    self.collect_selected_elements(obj.name,self.bm_instance, uv_layer)
-
-                try:
-                    self.bm_instance.free()
-                except:
-                    pass
 
             self.renderer_3DView.enable()
             return
