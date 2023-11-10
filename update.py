@@ -412,7 +412,7 @@ class Updater():
             modal_settings.init = True
             Update_Operator._is_running=True
             bpy.ops.uv.uv_mouse_position('INVOKE_DEFAULT')
-            print('启动鼠标事件器')
+            print(f'[draw uv]:启动鼠标事件器')
 
 
 
