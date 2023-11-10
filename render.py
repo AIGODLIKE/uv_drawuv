@@ -54,7 +54,10 @@ class Renderer_3DView(Render):
         self.selected_verts = {}
         self.selected_edges = {}
         self.selected_faces = {}
-
+    def coords_clear(self):
+        self.selected_verts.clear()
+        self.selected_edges.clear()
+        self.selected_faces.clear()
     def enable(self):
         if self.enabled:
             return

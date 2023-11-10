@@ -1,5 +1,4 @@
 import time
-
 import bpy
 from .render import tag_redraw_all_views
 from bpy.app.handlers import persistent
@@ -21,20 +20,23 @@ bl_info = {
     "warning": "",
     "doc_url": "",
 }
+
+
 #
 @persistent
 def pre_load_handler(dummy):
-    #载入新文件之前，结束渲染
+    # 载入新文件之前，结束渲染
     print('---------------------------------')
     print('[draw uv]:载入新blend文件,结束渲染')
     update.updater.stop()
+    update.updater.renderer_3DView.coords_clear()
+
 
 @persistent
 def post_load_handler(dummy):
+    # 载入新blend文件，初始化渲染设置
 
-    #载入新blend文件，初始化渲染设置
-
-    update.updater.subscribed=False
+    update.updater.subscribed = False
     update.modal_settings.init = False
     print('---------------------------------')
     print('[draw uv]:载入新blend文件,初始化渲染设置')
@@ -42,30 +44,36 @@ def post_load_handler(dummy):
     print(f'[draw uv]:更新器.start()')
     update.updater.start()
     # bpy.ops.uv.mouse_listen_operator('INVOKE_DEFAULT')
+
+
 #
 
 @persistent
 def load_check_uv_changes(dummy):
     bpy.app.timers.register(deps_refresh_view)
+
+
 def is_modal_running(operator_idname):
     for op in bpy.context.window_manager.operators:
         if op.name == operator_idname:
             return True
     return False
+
+
 def deps_refresh_view():
     '''隔0.3s刷新deps'''
 
-    obj=bpy.context.active_object
+    obj = bpy.context.active_object
     # print(time.time())
     if not obj:
         return
-    if obj is not None and obj.type=='MESH' :
+    if obj is not None and obj.type == 'MESH':
         if not update.updater.handle_uveditor():
             update.updater.renderer_3DView.disable()
             update.updater.renderer_UV.disable()
             tag_redraw_all_views()
 
-        if obj.mode=='OBJECT':
+        if obj.mode == 'OBJECT':
             update.updater.renderer_3DView.disable()
 
             tag_redraw_all_views()
@@ -81,15 +89,13 @@ def deps_refresh_view():
         if o.type == 'MESH':
             objs.append(o.name)
     if update.updater.selected_objs != objs:
-        update.updater.selected_objs=objs[:]
+        update.updater.selected_objs = objs[:]
         objs.clear()
 
-        obj.data['temp_refresh_prop']=1
+        obj.data['temp_refresh_prop'] = 1
         bpy.ops.wm.properties_remove(data_path="object.data", property_name="temp_refresh_prop")
         # print('delta time',time.time()-a)
     return 0.3
-
-
 
 
 classes = [
@@ -101,16 +107,17 @@ classes = [
     update.Update_Operator,
     # main.Updater,
 ]
-def register():
 
+
+def register():
     print('[draw uv]：注册插件')
     # global previous_mode
-    update.previous_mode=None
+    update.previous_mode = None
     for c in classes:
         bpy.utils.register_class(c)
-    bpy.types.Scene.uv_drawuv_switch=bpy.props.PointerProperty(type=props.DrawUV_Switch_Settings)
+    bpy.types.Scene.uv_drawuv_switch = bpy.props.PointerProperty(type=props.DrawUV_Switch_Settings)
     if not hasattr(update, "updater"):
-        update.updater=update.Updater()
+        update.updater = update.Updater()
     if not hasattr(update, "modal_settings"):
         update.modal_settings = update.Modal_settings()
     bpy.app.handlers.load_pre.append(pre_load_handler)
@@ -124,8 +131,8 @@ def register():
     update.updater.start()
     print('[draw uv]register updater start')
 
-def unregister():
 
+def unregister():
     # bpy.utils.unregister_class(UVMouseListenOperator)
     print('[draw uv]：取消注册，关闭渲染器')
     update.updater.stop()
