@@ -95,7 +95,6 @@ class Updater():
 
         self.uv_select_mode = None
         # detect mesh changes
-        self.vert_select_count = 0
         self.uv_select_count = 0
         # vbo
         self.selected_verts = []
