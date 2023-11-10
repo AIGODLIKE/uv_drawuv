@@ -219,13 +219,15 @@ class Updater():
                     # 如果UV选择发生更改，它会收集所有选择的元素。
                     # 记录这个过程花了多长时间（尽管实际的时间没有在这段代码中使用）
                     uv_layer = self.objs_bm[o].loops.layers.uv.verify()
-                    self.collect_selected_elements(o,self.objs_bm[o], uv_layer)
+
+                    self.collect_selected_elements(o, self.objs_bm[o], uv_layer)
                     self.objs_bm[o].free()
 
                 return
             uv_selection_changed=None
             for o in self.mul_objs:
                 self.objs_bm[o]=bmesh.from_edit_mesh(bpy.data.objects[o].data)
+                # print(self.objs_bm[o])
                 if len(self.objs_bm[o].verts) > prefs.max_verts:
                     if self.renderer_3DView.debug:
                         print('[draw uv]检测顶点数是否超标')
@@ -239,6 +241,7 @@ class Updater():
             if uv_selection_changed:
                 for o in self.mul_objs:
                     self.objs_bm[o] = bmesh.from_edit_mesh(bpy.data.objects[o].data)
+                    # print(self.objs_bm[o])
                     if uv_selection_changed or self.handle_uv_select_mode():  # 或者uv 选择变了
                         # self.uv_select_mode定义在init.py post_load_handler
                         if self.renderer_3DView.debug:
@@ -247,7 +250,9 @@ class Updater():
                         # 如果UV选择发生更改，它会收集所有选择的元素。
                         # 记录这个过程花了多长时间（尽管实际的时间没有在这段代码中使用）
                         uv_layer = self.objs_bm[o].loops.layers.uv.verify()
-                        self.collect_selected_elements(o,self.objs_bm[o], uv_layer)
+
+                        self.collect_selected_elements(o, self.objs_bm[o], uv_layer)
+
                         self.objs_bm[o].free()
 
             self.renderer_3DView.enable()
@@ -294,7 +299,7 @@ class Updater():
                 if v.select:
                     for loop in v.link_loops:
                         if loop[uv_layer].select:
-                            self.selected_verts.append(v.co.to_tuple())
+                            self.selected_verts.append(v.co)
         elif mode == 'EDGE':
             verts = bpy.data.objects[name].data.vertices
             verts_num = len(verts)
@@ -324,17 +329,17 @@ class Updater():
                     verts = [v.co for v in face.verts]
                     if all(loop[uv_layer].select for loop in face.loops):
                         if len(verts) == 3:
-                            self.selected_faces.extend([verts[0].to_tuple(), verts[1].to_tuple(), verts[2].to_tuple()])
+                            self.selected_faces.extend([verts[0], verts[1], verts[2]])
                         elif len(verts) == 4:
                             self.selected_faces.extend(
-                                [face.verts[0].co.to_tuple(), face.verts[1].co.to_tuple(), face.verts[2].co.to_tuple(),
-                                 face.verts[0].co.to_tuple(),
-                                 face.verts[2].co.to_tuple(), face.verts[3].co.to_tuple()])
+                                [face.verts[0].co, face.verts[1].co, face.verts[2].co,
+                                 face.verts[0].co,
+                                 face.verts[2].co, face.verts[3].co])
                         else:
                             new_verts = []
                             for i in range(1, len(verts) - 1):
-                                new_verts.extend([face.verts[0].co.to_tuple(), face.verts[i].co.to_tuple(),
-                                                  face.verts[i + 1].co.to_tuple()])
+                                new_verts.extend([face.verts[0].co, face.verts[i].co,
+                                                  face.verts[i + 1].co])
                             self.selected_faces.extend(new_verts)
         self.renderer_3DView.selected_verts[name] = np.array(self.selected_verts, dtype=np.float32)
         self.renderer_3DView.selected_edges[name] = np.array(self.selected_edges, dtype=np.float32)
