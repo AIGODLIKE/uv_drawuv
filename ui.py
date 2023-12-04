@@ -22,5 +22,5 @@ class PT_UV_Panel(bpy.types.Panel):
         col.prop(context.scene.uv_drawuv_switch, "draw_selected_in_3dview",  text="绘制uv顶点")
         col.prop(context.scene.uv_drawuv_switch, "draw_uv_in_objmode",  text="绘制uv")
         col.prop(context.preferences.addons[__package__].preferences, "max_verts", text="顶点限制")
-        # col.prop(context.scene.uv_highlight, "draw_preselected", text="Draw Preselection")
-        # col.prop(context.scene.uv_highlight, "show_uv_seams", text="Show UV Seams")
+        col.prop(context.preferences.addons[__package__].preferences, "object_draw_uv",
+                 text="UV颜色")
