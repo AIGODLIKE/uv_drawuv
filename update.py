@@ -10,7 +10,7 @@ class Modal_settings():
     def __init__(self):
         pass
         self.mouse_update = False
-        # self.translate_active=False
+
         self.init = None
 
 
@@ -18,7 +18,7 @@ modal_settings = Modal_settings()
 
 
 class Update_Operator(bpy.types.Operator):
-    """ 鼠标捕捉，在uv视图的时候更新选择的uv顶点
+    """ Mouse capture, update selected UV vertices while in UV view.
     """
     bl_idname = "uv.uv_mouse_position"
     bl_label = "UV Mouse location"
@@ -34,8 +34,7 @@ class Update_Operator(bpy.types.Operator):
         cls._is_running = False
 
     def modal(self, context, event):
-        # if self.is_start:
-        # print('模态中',self.is_start)
+
         if not self._is_running:
             return {'FINISHED'}
         if not context.active_object or context.active_object.mode == 'OBJECT' or not updater.handle_uveditor():
@@ -44,10 +43,9 @@ class Update_Operator(bpy.types.Operator):
             current_time = time.time()
             if current_time - self.last_mouse_move_time > self.cooldown:
                 self.last_mouse_move_time = current_time
-                # 在这里处理鼠标移动事件
-                # 更新视图或执行其他操作
+
                 modal_settings.UV_MOUSE = None
-                '''如果检测到鼠标移动事件，它将清空main.UV_MOUSE'''
+
                 for area in context.screen.areas:
                     if area.type == "IMAGE_EDITOR":
                         for region in area.regions:
@@ -58,27 +56,26 @@ class Update_Operator(bpy.types.Operator):
                                 region_y = region.y
                         mouse_region_x = event.mouse_x - region_x
                         mouse_region_y = event.mouse_y - region_y
-                        '''定义region_to_view和UV_TO_VIEW变量来进行区域和视图之间的转换。'''
+
 
                         if (mouse_region_x > 0 and mouse_region_y > 0 and
                                 mouse_region_x < region_x + width and
                                 mouse_region_y < region_y + height):
 
-                            # if updater.renderer_3DView.debug:
-                            # print('[draw uv]:模态：刷新一次uv顶点')
+
                             updater.update()
 
 
         return {'PASS_THROUGH'}
 
     def execute(self, context):
-        self.last_mouse_move_time = time.time() - self.cooldown  # 设置初始值
+        self.last_mouse_move_time = time.time() - self.cooldown  #
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
 
 class Updater():
-    '''处理更新，优化渲染'''
+
 
     def __init__(self):
         self.objs_bm = {}
@@ -87,16 +84,16 @@ class Updater():
         self.previous_mode = None
         self.renderer_3DView = Renderer_3DView()
         self.renderer_UV = Renderer_UV()
-        # 设置绘制颜色
+
         self.subscribed = False
         self.selected_objs=None
         self.last_update = 0
         self.scene_update = False
 
         self.uv_select_mode = None
-        # detect mesh changes
+
         self.uv_select_count = 0
-        # vbo
+
         self.selected_verts = []
         self.selected_edges = []
         self.selected_faces = []
@@ -106,20 +103,17 @@ class Updater():
         '''场景发生变化就执行deps handler'''
 
         try:
-            # if updater.renderer_3DView.debug:
-            print('[draw uv]:清除可能残余的handler')
+
             bpy.app.handlers.depsgraph_update_post.remove(depsgraph_handler)
         except:
             pass
-        # if updater.renderer_3DView.debug:
-        print(f'[draw uv]:载入新的handler')
+
         updater.initial_refresh = True
         bpy.app.handlers.depsgraph_update_post.append(depsgraph_handler)
-        # self.renderer_3DView.
+
 
     def stop(self):
-        if updater.renderer_3DView.debug:
-            print(f'[draw uv]:关闭渲染器')
+
         self.renderer_3DView.disable()
         self.renderer_UV.disable()
         try:
@@ -128,19 +122,17 @@ class Updater():
             pass
 
     def handle_uveditor(self):
-        '''检测是否有uv界面，有返回True'''
+
         for window in bpy.context.window_manager.windows:
             for area in window.screen.areas:
                 if area.type == "IMAGE_EDITOR" and area.ui_type == "UV":
-                    # self.renderer_3DView.uveditor = True
-                    # print(f'[draw uv]:update中，检测到有uv视图')
+
                     return True
-        # print(f'[draw uv]:update中，检测到无uv视图')
-        # self.renderer_3DView.uveditor = False
+
         return False
 
     def isEditingUVs(self):
-        '''编辑模式为真'''
+
         context = bpy.context
         obj = context.active_object
 
@@ -150,74 +142,62 @@ class Updater():
 
     def update(self):
         settings = bpy.context.scene.uv_drawuv_switch
-        if self.renderer_3DView.debug:
-            print('[draw uv]update')
+
         if not self.handle_uveditor():
-            # 没有uv界面不渲染 uv同步模式不渲染
-            if self.renderer_3DView.debug:
-                print('[draw uv]需要界面：uv')
+
+
             self.renderer_3DView.disable()
             self.renderer_UV.disable()
             tag_redraw_all_views()
             return
         if bpy.context.scene.tool_settings.use_uv_select_sync and self.isEditingUVs():
-            if self.renderer_3DView.debug:
-                print('[draw uv]需要禁用uv同步')
+
             self.renderer_3DView.disable()
             tag_redraw_all_views()
             return
 
         prefs = bpy.context.preferences.addons[__package__].preferences
         if not self.isEditingUVs():
-            # 处理uv视图绘制
-            if self.renderer_3DView.debug:
-                print('[draw uv]需要模式：编辑模式')
-                print(f'[draw uv]self.renderer_UV.uv_edited：{self.renderer_UV.uv_edited}')
-                print(f'[draw uv]obj_changed：{self.renderer_UV.obj_changed}')
-            # 如果当前不是在UV编辑模式下，它会重置某些变量并退出
+
             self.renderer_3DView.disable()
             tag_redraw_all_views()
             if not settings.draw_uv_in_objmode:
                 return
-            # 检测顶点数
+
             for o in bpy.context.selected_objects:
                 if o.type == 'MESH':
                     if len(o.data.vertices) > prefs.max_verts:
                         return
 
             if self.renderer_UV.uv_edited or self.renderer_UV.obj_changed:
-                # print(
-                    # f'[draw uv]如果uv_edited,obj_changed,{self.renderer_UV.uv_edited}{self.renderer_UV.obj_changed}更新uv')
+
                 self.collect_uv_elements()
             self.renderer_UV.enable()
 
         else:
             self.renderer_UV.disable()
             tag_redraw_all_views()
-            # 开始处理3d视图绘制
+
             if not settings.draw_selected_in_3dview:
                 return
             prefs = bpy.context.preferences.addons[__package__].preferences
 
-            #多物体与单物体
+
 
             self.mul_objs.clear()
             for o in bpy.context.selected_objects:
                 if o.type=='MESH':
                     self.mul_objs.append(o.name)
-                #多物体渲染
+
             if self.handle_uv_select_mode():
                 for o in self.mul_objs:
                     self.objs_bm[o] = bmesh.from_edit_mesh(bpy.data.objects[o].data)
                     if len(self.objs_bm[o].verts) > prefs.max_verts:
-                        if self.renderer_3DView.debug:
-                            print('[draw uv]检测顶点数是否超标')
+
                         return
-                    if self.renderer_3DView.debug:
-                        print('[draw uv]uv选择变了')
+
                     self.reset_3dview()
-                    # 如果UV选择发生更改，它会收集所有选择的元素。
-                    # 记录这个过程花了多长时间（尽管实际的时间没有在这段代码中使用）
+
                     uv_layer = self.objs_bm[o].loops.layers.uv.verify()
 
                     self.collect_selected_elements(o, self.objs_bm[o], uv_layer)
@@ -227,10 +207,9 @@ class Updater():
             uv_selection_changed=None
             for o in self.mul_objs:
                 self.objs_bm[o]=bmesh.from_edit_mesh(bpy.data.objects[o].data)
-                # print(self.objs_bm[o])
+
                 if len(self.objs_bm[o].verts) > prefs.max_verts:
-                    if self.renderer_3DView.debug:
-                        print('[draw uv]检测顶点数是否超标')
+
                     return
                 uv_layer = self.objs_bm[o].loops.layers.uv.verify()
                 uv_selection_changed = self.detect_mesh_changes(self.objs_bm[o], uv_layer)
@@ -243,12 +222,10 @@ class Updater():
                     self.objs_bm[o] = bmesh.from_edit_mesh(bpy.data.objects[o].data)
                     # print(self.objs_bm[o])
                     if uv_selection_changed or self.handle_uv_select_mode():  # 或者uv 选择变了
-                        # self.uv_select_mode定义在init.py post_load_handler
-                        if self.renderer_3DView.debug:
-                            print('[draw uv]uv选择变了')
+                        # self.uv_select_mode defined in init.py post_load_handler
+
                         self.reset_3dview()
-                        # 如果UV选择发生更改，它会收集所有选择的元素。
-                        # 记录这个过程花了多长时间（尽管实际的时间没有在这段代码中使用）
+
                         uv_layer = self.objs_bm[o].loops.layers.uv.verify()
 
                         self.collect_selected_elements(o, self.objs_bm[o], uv_layer)
@@ -259,42 +236,37 @@ class Updater():
             return
 
     def handle_uv_select_mode(self):
-        '''uv选择模式变了返回True'''
+
         if self.uv_select_mode != bpy.context.scene.tool_settings.uv_select_mode:
             self.uv_select_mode = bpy.context.scene.tool_settings.uv_select_mode
             return True
         return False
 
     def detect_mesh_changes(self, bm, uv_layer):
-        '''
-        :param bm_instance:
-        :param uv_layer:
-        :return:返回2个布尔值，顶点选择状态是否更改、以及UV选择状态是否更改
-        '''
-        # 如果顶点数不同，返回1
+
+
         uv_selection_changed = 0
-        # 如果选择顶点数不同，返回1
+
         uv_count = 0
         for f in bm.faces:
             if f.select:
                 for l in f.loops:
                     if l[uv_layer].select:
                         uv_count += l.index
-        # 收集uv index 避免选择相同uv数，不同uv顶点
+
         if self.uv_select_count != uv_count:
             self.uv_select_count = uv_count
             uv_selection_changed = True
             # print('[draw uv]uv_selection_changed', uv_selection_changed)
-        # 更新选择uv
+
         # return (verts_selection_changed, uv_selection_changed)
         return  uv_selection_changed
 
     def collect_selected_elements(self, name,bm, uv_layer):
-        '''这个函数的目标是从bmesh中提取关于选中元素的数据，
-        并将这些数据存储在VAO中，以便后续的渲染或其他操作'''
+
         mode = bpy.context.scene.tool_settings.uv_select_mode
         if mode == 'VERTEX':
-            # 选择的顶点越少 越快
+
             for v in bm.verts:
                 if v.select:
                     for loop in v.link_loops:
@@ -304,15 +276,15 @@ class Updater():
             verts = bpy.data.objects[name].data.vertices
             verts_num = len(verts)
             if verts_num > 5000:
-                # 粗糙版开销小，精度低
+                # Rough version has low cost, low precision
                 self.selected_edges = [
-                    v.co.to_tuple()  # 获取UV坐标而不是顶点坐标
+                    v.co.to_tuple()
                     for e in bm.edges if e.select
                     if e.link_loops[0][uv_layer].select
                     for v in e.verts]
             else:
-                # 精确版开销比较大
-                # 顶点小于5000时用精确版
+                # The precise version has a higher cost.
+                # when the number of vertices is less than 5000
                 selected_uv_edges = set()
                 for face in bm.faces:
                     for loop in face.loops:
@@ -353,17 +325,15 @@ class Updater():
     def start_mouse_op(self):
 
         # print(f'[draw uv]:启动鼠标事件器中...', Update_Operator._is_running)
-        if updater.renderer_3DView.debug:
-            print(f'[draw uv]:读取初始化[模态初始化] {modal_settings.init}  [模态启动]{modal_settings.mouse_update}')
+
         if modal_settings.init:
-            if updater.renderer_3DView.debug:
-                print(f'[draw uv]:[模态初始化]{modal_settings.init},跳过')
+
             return
         else:
             modal_settings.init = True
             Update_Operator._is_running=True
             bpy.ops.uv.uv_mouse_position('INVOKE_DEFAULT')
-            print(f'[draw uv]:启动鼠标事件器')
+
 
 
 
@@ -397,7 +367,7 @@ class Updater():
         self.renderer_UV.obj_uv = np.array(self.uv_lines, dtype=np.float32)
 
         self.uv_lines.clear()
-        # print('new', time.time() - a)
+
         self.renderer_UV.uv_edited = False
 
 
@@ -407,7 +377,7 @@ updater = Updater()
 def switch_obj_callback(context):
     updater.renderer_UV.obj_changed = True
     # global previous_mode
-    # 在每次活动对象更改时，重新设置模式的订阅
+
     bpy.msgbus.clear_by_owner("mode_callback_owner")
     if bpy.context.object:
         rna_path = bpy.context.object.path_resolve("mode", False)
@@ -419,9 +389,9 @@ def switch_obj_callback(context):
             options={"PERSISTENT"}
         )
 
-        # print('[draw uv]当前激活物体:', bpy.context.object.name)
+
         if bpy.context.object.type == 'MESH':
-            # print('[draw uv]切换物体，刷新uv:', )
+
             updater.update()
             updater.obj_changed = False
     else:
@@ -442,11 +412,10 @@ def switch_obj_msgbus():
 
 
 def toggle_mode_callback():
-    # print('切换模式')
-    # global previous_mode
+
     current_mode = bpy.context.object.mode
     if current_mode != updater.previous_mode:
-        # print("[draw uv]:切换模式 {current_mode}")
+
         updater.previous_mode = current_mode
     if bpy.context.active_object.type == 'MESH':
         updater.update()
@@ -456,30 +425,27 @@ def toggle_mode_callback():
 
 @persistent
 def depsgraph_handler(dummy):
-    # print('[draw uv]进入视图刷新句柄handler')
+
     if not updater.subscribed:
-        # 设置渲染开关
+
         switch_obj_msgbus()
         updater.subscribed = True
 
-    # updater.start_mouse_op()
-    # print('[draw uv]‘，updater.initial_refresh)
     try:
         obj = bpy.context.active_object
-        # 载入后刚开始需要 计算delta，所以首次要强制刷新下
+
         if updater.initial_refresh:
 
             if obj is not None and obj.type == 'MESH' and obj.mode == 'OBJECT':
-                # print(f'[draw uv]:首次更新')
+
                 updater.update()
-                # obj.data.update()
+
                 updater.initial_refresh = False
 
         delta = (time.perf_counter() - updater.last_update)
 
         if delta > 0.31 and updater.scene_update:
-            if updater.renderer_3DView.debug:
-                print(f'[draw uv]:{delta} 更新一次数据处理')
+
             updater.scene_update = False
 
             updater.update()
@@ -487,18 +453,15 @@ def depsgraph_handler(dummy):
 
         depsgraph = bpy.context.evaluated_depsgraph_get()
 
-        # if updater.renderer_3DView.debug:
-        #     print('[draw uv]当前激活物体:',obj)
+
         if obj is not None:
             for update in depsgraph.updates:
-                # if updater.renderer_3DView.debug:
-                # print('[draw uv]update id:', update.id)
+
                 if update.id.name == obj.name and update.is_updated_geometry:
                     updater.last_update = time.perf_counter()
-                    # 场景被更新
+
                     updater.scene_update = True
 
-            if updater.renderer_3DView.debug:
-                print('[draw uv]:记录一次时间戳')
+
     except:
         pass

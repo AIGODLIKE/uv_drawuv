@@ -10,13 +10,13 @@ from . import (
 )
 
 bl_info = {
-    "name": "幻之境:uv高亮绘制",
+    "name": "draw_uv",
     "category": "UV",
-    "author": "幻之境:cupcko",
-    "version": (1, 3, 0),
+    "author": "AIGODLIKE Community:cupcko",
+    "version": (1, 4, 0),
     "blender": (3, 5, 0),
     "location": "ImageEditor > Tool Shelf",
-    "description": "在物体模式下显示uv，在编辑模式下绘制选择的uv顶点",
+    "description": "This plugin allows for selected UV vertices to be rendered in the 3D view,and enabling the display of object UVs in object mode.",
     "warning": "",
     "doc_url": "",
 }
@@ -25,25 +25,25 @@ bl_info = {
 #
 @persistent
 def pre_load_handler(dummy):
-    # 载入新文件之前，结束渲染
+    #
     print('---------------------------------')
-    print('[draw uv]:载入新blend文件,结束渲染')
+
     update.updater.stop()
     update.updater.renderer_3DView.coords_clear()
 
 
 @persistent
 def post_load_handler(dummy):
-    # 载入新blend文件，初始化渲染设置
+    #
 
     update.updater.subscribed = False
     update.modal_settings.init = False
     print('---------------------------------')
-    print('[draw uv]:载入新blend文件,初始化渲染设置')
+
     update.updater.uv_select_mode = bpy.context.scene.tool_settings.uv_select_mode
-    print(f'[draw uv]:更新器.start()')
+
     update.updater.start()
-    # bpy.ops.uv.mouse_listen_operator('INVOKE_DEFAULT')
+
 
 
 #
@@ -61,12 +61,12 @@ def is_modal_running(operator_idname):
 
 
 def deps_refresh_view():
-    '''隔0.3s刷新deps'''
+    '''0.3s refresh deps'''
 
     obj = bpy.context.active_object
-    # print(time.time())
+
     if not obj:
-        return
+        return 0.3
     if obj is not None and obj.type == 'MESH':
         if not update.updater.handle_uveditor():
             update.updater.renderer_3DView.disable()
@@ -98,19 +98,51 @@ def deps_refresh_view():
     return 0.3
 
 
+class TranslationHelper():
+    def __init__(self, name: str, data: dict, lang='zh_CN'):
+        self.name = name
+        self.translations_dict = dict()
+
+        for src, src_trans in data.items():
+            key = ("Operator", src)
+            self.translations_dict.setdefault(lang, {})[key] = src_trans
+            key = ("*", src)
+            self.translations_dict.setdefault(lang, {})[key] = src_trans
+
+    def register(self):
+        try:
+            bpy.app.translations.register(self.name, self.translations_dict)
+        except(ValueError):
+            pass
+
+    def unregister(self):
+        bpy.app.translations.unregister(self.name)
+
+
+from . import zh_CN
+
+DrawUV_zh_CN = TranslationHelper('DrawUV_zh_CN', zh_CN.data)
+DrawUV_zh_HANS = TranslationHelper('DrawUV_zh_HANS', zh_CN.data, lang='zh_HANS')
+
+
 classes = [
-    # props.UVHighlightSettings,
-    # operators.UV_OT_Timer,
+
     prefs.DrawUV_Color_Preferences,
     props.DrawUV_Switch_Settings,
     ui.PT_UV_Panel,
     update.Update_Operator,
-    # main.Updater,
+
 ]
 
 
 def register():
-    print('[draw uv]：注册插件')
+
+    if bpy.app.version < (4, 0, 0):
+        DrawUV_zh_CN.register()
+    else:
+        DrawUV_zh_CN.register()
+        DrawUV_zh_HANS.register()
+
     # global previous_mode
     update.previous_mode = None
     for c in classes:
@@ -122,19 +154,22 @@ def register():
         update.modal_settings = update.Modal_settings()
     bpy.app.handlers.load_pre.append(pre_load_handler)
     bpy.app.handlers.load_post.append(post_load_handler)
-    # update.updater.subscribed = False
-    # update.modal_settings.init = False
 
-    # update.updater.start_mouse_op()
-    bpy.app.timers.register(deps_refresh_view)
+    bpy.app.timers.register(deps_refresh_view, first_interval=0, persistent=True)
     bpy.app.handlers.load_post.append(load_check_uv_changes)
     update.updater.start()
     print('[draw uv]register updater start')
 
 
 def unregister():
-    # bpy.utils.unregister_class(UVMouseListenOperator)
-    print('[draw uv]：取消注册，关闭渲染器')
+
+    if bpy.app.version < (4, 0, 0):
+        DrawUV_zh_CN.unregister()
+    else:
+        DrawUV_zh_CN.unregister()
+        DrawUV_zh_HANS.unregister()
+
+
     update.updater.stop()
     update.Update_Operator.stop()
     del update.updater
