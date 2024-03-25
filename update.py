@@ -28,17 +28,20 @@ class Update_Operator(bpy.types.Operator):
     _is_running = True
     is_start = False
 
-
     @classmethod
     def stop(cls):
         cls._is_running = False
 
+    @classmethod
+    def start(cls):
+        cls._is_running = True
     def modal(self, context, event):
-
+        print(self._is_running,'正在运行模态')
         if not self._is_running:
+            '''关闭之后要重新初始化模态'''
+            modal_settings.init=False
             return {'FINISHED'}
-        if not context.active_object or context.active_object.mode == 'OBJECT' or not updater.handle_uveditor():
-            return {'PASS_THROUGH'}
+
         if event.type == 'MOUSEMOVE':
             current_time = time.time()
             if current_time - self.last_mouse_move_time > self.cooldown:
@@ -76,7 +79,6 @@ class Update_Operator(bpy.types.Operator):
 
 class Updater():
 
-
     def __init__(self):
         self.objs_bm = {}
         self.mul_objs = []
@@ -86,7 +88,7 @@ class Updater():
         self.renderer_UV = Renderer_UV()
 
         self.subscribed = False
-        self.selected_objs=None
+        self.selected_objs = None
         self.last_update = 0
         self.scene_update = False
 
@@ -111,7 +113,6 @@ class Updater():
         updater.initial_refresh = True
         bpy.app.handlers.depsgraph_update_post.append(depsgraph_handler)
 
-
     def stop(self):
 
         self.renderer_3DView.disable()
@@ -126,7 +127,6 @@ class Updater():
         for window in bpy.context.window_manager.windows:
             for area in window.screen.areas:
                 if area.type == "IMAGE_EDITOR" and area.ui_type == "UV":
-
                     return True
 
         return False
@@ -144,14 +144,11 @@ class Updater():
         settings = bpy.context.scene.uv_drawuv_switch
 
         if not self.handle_uveditor():
-
-
             self.renderer_3DView.disable()
             self.renderer_UV.disable()
             tag_redraw_all_views()
             return
         if bpy.context.scene.tool_settings.use_uv_select_sync and self.isEditingUVs():
-
             self.renderer_3DView.disable()
             tag_redraw_all_views()
             return
@@ -170,7 +167,6 @@ class Updater():
                         return
 
             if self.renderer_UV.uv_edited or self.renderer_UV.obj_changed:
-
                 self.collect_uv_elements()
             self.renderer_UV.enable()
 
@@ -182,18 +178,15 @@ class Updater():
                 return
             prefs = bpy.context.preferences.addons[__package__].preferences
 
-
-
             self.mul_objs.clear()
             for o in bpy.context.selected_objects:
-                if o.type=='MESH':
+                if o.type == 'MESH':
                     self.mul_objs.append(o.name)
 
             if self.handle_uv_select_mode():
                 for o in self.mul_objs:
                     self.objs_bm[o] = bmesh.from_edit_mesh(bpy.data.objects[o].data)
                     if len(self.objs_bm[o].verts) > prefs.max_verts:
-
                         return
 
                     self.reset_3dview()
@@ -204,12 +197,11 @@ class Updater():
                     self.objs_bm[o].free()
 
                 return
-            uv_selection_changed=None
+            uv_selection_changed = None
             for o in self.mul_objs:
-                self.objs_bm[o]=bmesh.from_edit_mesh(bpy.data.objects[o].data)
+                self.objs_bm[o] = bmesh.from_edit_mesh(bpy.data.objects[o].data)
 
                 if len(self.objs_bm[o].verts) > prefs.max_verts:
-
                     return
                 uv_layer = self.objs_bm[o].loops.layers.uv.verify()
                 uv_selection_changed = self.detect_mesh_changes(self.objs_bm[o], uv_layer)
@@ -244,7 +236,6 @@ class Updater():
 
     def detect_mesh_changes(self, bm, uv_layer):
 
-
         uv_selection_changed = 0
 
         uv_count = 0
@@ -260,9 +251,9 @@ class Updater():
             # print('[draw uv]uv_selection_changed', uv_selection_changed)
 
         # return (verts_selection_changed, uv_selection_changed)
-        return  uv_selection_changed
+        return uv_selection_changed
 
-    def collect_selected_elements(self, name,bm, uv_layer):
+    def collect_selected_elements(self, name, bm, uv_layer):
 
         mode = bpy.context.scene.tool_settings.uv_select_mode
         if mode == 'VERTEX':
@@ -323,16 +314,18 @@ class Updater():
         self.selected_faces.clear()
 
     def start_mouse_op(self):
-
+        '''启动模态'''
         # print(f'[draw uv]:启动鼠标事件器中...', Update_Operator._is_running)
-
+        print('init',modal_settings.init,'如果为真,已经启动过')
         if modal_settings.init:
-
+            '''防止多次启动'''
             return
         else:
-            modal_settings.init = True
-            Update_Operator._is_running=True
-            bpy.ops.uv.uv_mouse_position('INVOKE_DEFAULT')
+            if Update_Operator._is_running:
+                modal_settings.init = True
+                # Update_Operator._is_running=True
+                bpy.ops.uv.uv_mouse_position('INVOKE_DEFAULT')
+
 
 
 
@@ -389,9 +382,7 @@ def switch_obj_callback(context):
             options={"PERSISTENT"}
         )
 
-
         if bpy.context.object.type == 'MESH':
-
             updater.update()
             updater.obj_changed = False
     else:
@@ -412,10 +403,8 @@ def switch_obj_msgbus():
 
 
 def toggle_mode_callback():
-
     current_mode = bpy.context.object.mode
     if current_mode != updater.previous_mode:
-
         updater.previous_mode = current_mode
     if bpy.context.active_object.type == 'MESH':
         updater.update()
@@ -425,9 +414,7 @@ def toggle_mode_callback():
 
 @persistent
 def depsgraph_handler(dummy):
-
     if not updater.subscribed:
-
         switch_obj_msgbus()
         updater.subscribed = True
 
@@ -437,7 +424,6 @@ def depsgraph_handler(dummy):
         if updater.initial_refresh:
 
             if obj is not None and obj.type == 'MESH' and obj.mode == 'OBJECT':
-
                 updater.update()
 
                 updater.initial_refresh = False
@@ -445,14 +431,12 @@ def depsgraph_handler(dummy):
         delta = (time.perf_counter() - updater.last_update)
 
         if delta > 0.31 and updater.scene_update:
-
             updater.scene_update = False
 
             updater.update()
             return
 
         depsgraph = bpy.context.evaluated_depsgraph_get()
-
 
         if obj is not None:
             for update in depsgraph.updates:

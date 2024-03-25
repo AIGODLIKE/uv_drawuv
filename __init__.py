@@ -62,27 +62,32 @@ def is_modal_running(operator_idname):
 
 def deps_refresh_view():
     '''0.3s refresh deps'''
-
     obj = bpy.context.active_object
 
     if not obj:
         return 0.3
     if obj is not None and obj.type == 'MESH':
         if not update.updater.handle_uveditor():
+            #如果没有uv编辑器
+            #停止渲染,关闭模态
             update.updater.renderer_3DView.disable()
             update.updater.renderer_UV.disable()
+            update.Update_Operator.stop()
             tag_redraw_all_views()
-
+            print('暂停模态')
         if obj.mode == 'OBJECT':
             update.updater.renderer_3DView.disable()
-
+            update.Update_Operator.stop()
             tag_redraw_all_views()
-
+            print('暂停模态')
         else:
             update.updater.renderer_3DView.enable()
+            update.Update_Operator.start()
+            print('启动模态',update.Update_Operator._is_running)
             tag_redraw_all_views()
 
     update.updater.start_mouse_op()
+    #需要检测running 和init
     # a = time.time()
     objs = []
     for o in bpy.context.selected_objects:
