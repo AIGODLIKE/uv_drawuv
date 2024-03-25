@@ -13,7 +13,7 @@ bl_info = {
     "name": "draw_uv",
     "category": "UV",
     "author": "AIGODLIKE Community:cupcko",
-    "version": (1, 4, 0),
+    "version": (1, 4, 1),
     "blender": (3, 5, 0),
     "location": "ImageEditor > Tool Shelf",
     "description": "This plugin allows for selected UV vertices to be rendered in the 3D view,and enabling the display of object UVs in object mode.",
