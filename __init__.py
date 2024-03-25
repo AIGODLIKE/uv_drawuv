@@ -74,16 +74,16 @@ def deps_refresh_view():
             update.updater.renderer_UV.disable()
             update.Update_Operator.stop()
             tag_redraw_all_views()
-            print('暂停模态')
+            # print('暂停模态')
         if obj.mode == 'OBJECT':
             update.updater.renderer_3DView.disable()
             update.Update_Operator.stop()
             tag_redraw_all_views()
-            print('暂停模态')
+            # print('暂停模态')
         else:
             update.updater.renderer_3DView.enable()
             update.Update_Operator.start()
-            print('启动模态',update.Update_Operator._is_running)
+            # print('启动模态',update.Update_Operator._is_running)
             tag_redraw_all_views()
 
     update.updater.start_mouse_op()

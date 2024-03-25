@@ -36,7 +36,7 @@ class Update_Operator(bpy.types.Operator):
     def start(cls):
         cls._is_running = True
     def modal(self, context, event):
-        print(self._is_running,'正在运行模态')
+        # print(self._is_running,'正在运行模态')
         if not self._is_running:
             '''关闭之后要重新初始化模态'''
             modal_settings.init=False
