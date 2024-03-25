@@ -316,7 +316,7 @@ class Updater():
     def start_mouse_op(self):
         '''启动模态'''
         # print(f'[draw uv]:启动鼠标事件器中...', Update_Operator._is_running)
-        print('init',modal_settings.init,'如果为真,已经启动过')
+        # print('init',modal_settings.init,'如果为真,已经启动过')
         if modal_settings.init:
             '''防止多次启动'''
             return
