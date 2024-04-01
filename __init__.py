@@ -10,7 +10,11 @@ from . import (
 )
 
 bl_info = {
+<<<<<<< Updated upstream
     "name": "幻之境:uv高亮绘制",
+=======
+    "name": "Draw_uv",
+>>>>>>> Stashed changes
     "category": "UV",
     "author": "幻之境:cupcko",
     "version": (1, 0, 2),
