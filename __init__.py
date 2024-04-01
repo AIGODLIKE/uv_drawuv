@@ -10,7 +10,10 @@ from . import (
 )
 
 bl_info = {
-    "name": "draw_uv",
+
+    "name": "Draw_uv",
+
+
     "category": "UV",
     "author": "AIGODLIKE Community:cupcko",
     "version": (1, 4, 1),

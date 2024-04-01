@@ -1,0 +1,40 @@
+schema_version = "1.4.1"
+
+# Example of manifest file for a Blender extension
+# Change the values according to your extension
+id = "Draw_uv"
+version = "1.4.1"
+name = "Draw_uv"
+tagline = "Setting the DPI of an image in Blender"
+maintainer = "Cupcko <649730016@qq.com>"
+# Supported types: "add-on", "theme"
+type = "add-on"
+
+# Optional: add-ons can list which resources they will require:
+# * "files" (for access of any filesystem operations)
+# * "network" (for internet access)
+# * "camera" (to capture photos and videos)
+# * "microphone" (to capture audio)
+# permissions = ["files", "network"]
+
+# Optional link to documentation, support, source files, etc
+ website = "https://github.com/AIGODLIKE/uv_draw"
+
+# Optional list defined by Blender and server, see:
+# https://docs.blender.org/manual/en/dev/extensions/tags.html
+tags = ["Render"]
+
+blender_version_min = "4.2.0"
+# Optional: maximum supported Blender version
+# blender_version_max = "5.1.0"
+
+# License conforming to https://spdx.org/licenses/ (use "SPDX: prefix)
+# https://docs.blender.org/manual/en/dev/extensions/licenses.html
+license = [
+  "SPDX:GPL-2.0-or-later",
+]
+# Optional: required by some licenses.
+copyright = [
+  "2002-2024 Cupcko",
+  "2022 AIGODLIKE Community",
+]
