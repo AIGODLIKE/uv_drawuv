@@ -62,11 +62,7 @@ class Renderer_3DView(Render):
         if self.enabled:
             return
         self.enabled = True
-        '''
-        self.draw：这是将被调用的方法 / 函数。用于绘图。
-        ()：这是传递给self.draw方法的参数。在这里，它是一个空的元组，意味着self.draw不接受任何额外的参数。
-        'WINDOW'：这是绘图的目标类型。在Blender中，它表示整个3D视图窗口。
-        'POST_VIEW'：这表示在所有的常规3D视图内容绘制之后，再绘制self.draw。这确保self.draw的内容被绘制在顶部，不会被其他3D内容遮挡'''
+
         self.handle_3dview = bpy.types.SpaceView3D.draw_handler_add(self.draw, (), 'WINDOW', 'POST_VIEW')
 
     def disable(self):
@@ -75,7 +71,7 @@ class Renderer_3DView(Render):
         self.enabled = False
         bpy.types.SpaceView3D.draw_handler_remove(
             self.handle_3dview, 'WINDOW')
-        # print(self.handle_3dview)
+
         self.handle_3dview = None
 
     def draw(self):
@@ -84,7 +80,7 @@ class Renderer_3DView(Render):
             return
 
         if self.debug:
-            # print(len(self.selected_verts))
+
             pass
 
         mode = bpy.context.scene.tool_settings.uv_select_mode
@@ -119,22 +115,18 @@ class Renderer_3DView(Render):
 class Renderer_UV(Render):
     def __init__(self):
         super(Renderer_UV, self).__init__()
-        # self.obj_num = None
-        # self.obj_name = None
+
         self.offset = None
         self.zoom = None
         self.obj_uv = None
-        # self.edit_uv = None
-        # uvedited为真，说明进入了编辑模式，可能改变了uv
+
         self.uv_edited = True
         self.obj_changed = True
         self.enabled = False
-        # self.uveditor_space = None
-        # self.uveditor_region = None
-        # self.shader=self.get_shader()
+
         self.shader = shader.uv_gpu_shader()
         self.mvp_matrix = None
-        # self.adjusted_line_coords = []
+
 
     def enable(self):
         if self.enabled:
@@ -152,7 +144,7 @@ class Renderer_UV(Render):
         self.handle_uv = None
 
     def get_uv_editor_mvp_matrix(self):
-        # 寻找图像编辑器区域
+
         area = next((a for a in bpy.context.screen.areas if a.type == 'IMAGE_EDITOR'), None)
         if not area:
             return None
@@ -174,7 +166,7 @@ class Renderer_UV(Render):
 
         m[0][3] = x_offset
         m[1][3] = y_offset
-        # return Matrix(matrix)
+
         return m
 
     def draw(self):
@@ -190,7 +182,7 @@ class Renderer_UV(Render):
         batch = batch_for_shader(self.shader, 'LINES', {"pos": self.obj_uv})
 
         self.shader.bind()
-        # 只需要传入一次变换矩阵，多次传入会有问题
+        # Only pass in the transformation matrix once; passing it multiple times will cause problems
         if not self.mvp_matrix:
             self.mvp_matrix = self.get_uv_editor_mvp_matrix()
             if not self.mvp_matrix:
@@ -198,7 +190,7 @@ class Renderer_UV(Render):
             self.shader.uniform_float("ModelViewProjectionMatrix", self.mvp_matrix)
         else:
             pass
-        # print(self.mvp_matrix)
+
         color = bpy.context.preferences.addons[__package__].preferences
         self.shader.uniform_float("color", color.object_draw_uv)
 
