@@ -10,11 +10,10 @@ from . import (
 )
 
 bl_info = {
-
     "name": "uv_drawuv",
     "category": "UV",
     "author": "AIGODLIKE Community:cupcko",
-    "version": (1, 4, 1),
+    "version": (1, 4, 2),
     "blender": (3, 5, 0),
     "location": "ImageEditor > Tool Shelf",
     "description": "This plugin allows for selected UV vertices to be rendered in the 3D view,and enabling the display of object UVs in object mode.",
