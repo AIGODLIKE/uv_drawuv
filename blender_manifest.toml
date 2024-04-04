@@ -1,10 +1,10 @@
-schema_version = "1.4.1"
+schema_version = "1.4.2"
 
 # Example of manifest file for a Blender extension
 # Change the values according to your extension
-id = "Draw_uv"
-version = "1.4.1"
-name = "Draw_uv"
+id = "uv_drawuv"
+version = "1.4.2"
+name = "uv_drawuv"
 tagline = "Setting the DPI of an image in Blender"
 maintainer = "Cupcko <649730016@qq.com>"
 # Supported types: "add-on", "theme"
